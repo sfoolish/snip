@@ -1,0 +1,8 @@
+
+## [Linux下文件加密压缩和解压的方法](http://blog.cofface.com/archives/802.html)
+
+```bash
+tar -zcf  - filename |openssl des3 -salt -k password | dd of=filename.des3
+dd if=filename.des3 |openssl des3 -d -k password | tar zxf -
+```
+
