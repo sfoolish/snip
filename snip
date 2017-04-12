@@ -6,3 +6,37 @@ tar -zcf  - filename |openssl des3 -salt -k password | dd of=filename.des3
 dd if=filename.des3 |openssl des3 -d -k password | tar zxf -
 ```
 
+#!/bin/bash
+
+compass_work_dir=$1
+
+if [[ $compass_work_dir == "" ]]; then
+    echo "Please Run: $0 <compass_work_dir>"
+    exit 1
+fi
+
+cd $compass_work_dir
+
+./build.sh
+
+#export OS_VERSION=centos7
+#export OS_VERSION=trusty
+#export OPENSTACK_VERSION=liberty
+#export OS_VERSION=xenial
+#export OPENSTACK_VERSION=mitaka_xenial
+
+export ISO_URL=file:///opt/workspace/$compass_work_dir/work/building/compass.iso
+#export DHA=/opt/workspace/config/dha/os-nosdn-nofeature-ha-no-ceph.yml
+#export DHA=/opt/workspace/config/dha/os-nosdn-nofeature-ha.yml
+#export DHA=/opt/workspace/config/dha/os-nosdn-nofeature-ha-no-ceph-1+2.yml
+export DHA=/opt/workspace/config/dha/os-nosdn-nofeature-ha-ceph-1+2.yml
+export NETWORK=/opt/workspace/config/network/network_108.yml
+
+export DEPLOY_FIRST_TIME=False
+#export DEPLOY_HOST=${DEPLOY_HOST-"true"}
+
+export VIRT_NUMBER=3
+
+./deploy.sh
+
+
