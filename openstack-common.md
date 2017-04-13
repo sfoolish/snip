@@ -220,3 +220,81 @@ openstack hypervisor list
 nova boot --flavor m1.tiny --image cirros-0.3.3 --nic net-id=$(neutron net-list | grep demo-net | awk '{print $2}') --availability-zone nova:host4:host4 demo
 
 
+---
+
+
+## live-migration testing
+
+https://blog.zhaw.ch/icclab/an-analysis-of-the-performance-of-live-migration-in-openstack/
+
+## 冷热迁移 test
+
+```bash
+nova flavor-create m1.tiny 1 1024 0 1
+
+
+neutron net-create ext-net --provider:network_type=flat --provider:physical_network physnet --router:external=true
+neutron subnet-create ext-net 192.168.108.0/24 --name ext-subnet --enable-dhcp=False --allocation-pool start=192.168.108.221,end=192.168.108.231 --gateway 192.168.108.1
+
+
+scp 10.1.0.12:/var/www/guestimg/cirros-0.3.3-x86_64-disk.img ~/
+
+source /opt/admin-openrc.sh
+
+glance image-create --name "cirros-0.3.3"  \
+    --file /root/cirros-0.3.3-x86_64-disk.img \
+    --disk-format qcow2 --container-format bare
+
+nova secgroup-add-rule default icmp -1 -1 0.0.0.0/0
+nova secgroup-add-rule default tcp 22 22 0.0.0.0/0
+
+neutron router-create demo-router
+neutron router-gateway-set demo-router ext-net
+neutron net-create demo-net
+neutron subnet-create demo-net 192.168.1.0/24 --name demo-subnet --gateway 192.168.1.1
+neutron router-interface-add demo-router demo-subnet
+
+nova boot --flavor m1.tiny --image cirros-0.3.3     --nic net-id=$(neutron net-list | grep demo-net | awk '{print $2}') demo1
+
+
+neutron floatingip-create ext-net
+nova floating-ip-associate demo1 192.168.108.222
+
+ssh cirros@192.168.108.222
+
+
+openstack volume create --image e6c5e953-90b8-4bdb-9f2a-5ae68f6a68af --size 1 bootable_volume
+openstack server create --flavor m1.tiny --volume 572ea567-933d-42ba-a12c-81c7586d7d4f --nic net-id=$(neutron net-list | grep demo-net | awk '{print $2}') demo1
+
+
+openstack server create --flavor disk --volume 79e53594-4a1d-4b20-bb67-645908da9e53 --nic net-id=$(neutron net-list | grep demo-net | awk '{print $2}') demo2
+
+
+
+nova boot --flavor m1.tiny --image cirros-0.3.3     --nic net-id=$(neutron net-list | grep demo-net | awk '{print $2}') demo1
+
+
+
+
+nova migrate demo1
+nova resize-confirm demo1
+
+```
+
+## Boot Xenial VM
+
+```bash
+wget 192.168.21.2:8888/xenial-server-cloudimg-amd64-disk1.img
+glance image-create --name "xenial"  \
+    --file /root/xenial-server-cloudimg-amd64-disk1.img \
+    --disk-format qcow2 --container-format bare
+
+nova keypair-add --pub-key /root/.ssh/id_rsa.pub mykey
+
+nova boot --flavor m1.small --image xenial --nic net-id=$(neutron net-list | grep demo-net | awk '{print $2}') --key-name mykey demo2
+
+nova boot --flavor m1.tiny --image cirros-0.3.3 --nic net-id=$(neutron net-list | grep demo-net | awk '{print $2}') --availability-zone nova:host4:host4 demo
+
+nova boot --flavor m1.tiny --image cirros-0.3.3 --nic net-id=$(neutron net-list | grep demo-net | awk '{print $2}') --availability-zone nova:host5:host5 demo
+```
+
