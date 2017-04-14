@@ -1,0 +1,11 @@
+2017-04-13 05:15:05,641 - net-init - INFO - setup_intfs enter
+2017-04-13 05:15:05,641 - net-init - INFO - add_vlan_link enter
+2017-04-13 05:15:05,641 - net-init - INFO - add_vlan_link: cmd=ip link add link eth1 name storage type vlan id 102; ip link set storage up; ip link set eth1 up
+2017-04-13 05:15:05,729 - net-init - INFO - add_ovs_port enter
+2017-04-13 05:15:05,729 - net-init - INFO - add_ovs_port: cmd=ovs-vsctl --may-exist add-port br-prv external -- set Interface external type=internal;ip link set dev external address         `ip link show eth1 |awk '/link\/ether/{print $2}'`;ip link set external up;
+2017-04-13 05:15:05,800 - net-init - INFO - add_vlan_link enter
+2017-04-13 05:15:05,804 - net-init - INFO - add_vlan_link: cmd=ip link add link eth1 name mgmt type vlan id 101; ip link set mgmt up; ip link set eth1 up
+2017-04-13 05:15:05,846 - net-init - INFO - setup_ips enter
+2017-04-13 05:15:05,847 - net-init - INFO - setup_ips: cmd=ip addr add 192.168.108.200/24 brd 192.168.108.255 dev external;route del default;ip route add default via 192.168.108.1 dev external
+2017-04-13 05:15:06,024 - net-init - INFO - setup_ips: cmd=ip addr add 172.16.2.1/24 brd 172.16.2.255 dev storage;
+2017-04-13 05:15:06,026 - net-init - INFO - setup_ips: cmd=ip addr add 172.16.1.1/24 brd 172.16.1.255 dev mgmt;
